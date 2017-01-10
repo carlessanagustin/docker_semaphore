@@ -1,0 +1,52 @@
+version: '2'
+services:
+
+  semaphore_api:
+    hostname: semaphore_api
+    build: semaphore
+    volumes:
+      - "./dynamic/semaphore:/etc/semaphore"
+    environment:
+      SEMAPHORE_PLAYBOOK_PATH: /etc/semaphore
+      SEMAPHORE_ADMIN_EMAIL: my_email@domain.com
+      SEMAPHORE_ADMIN_PASSWORD: admin
+      SEMAPHORE_ADMIN_NAME: "Default Administrator"
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: semaphore
+      SEMAPHORE_DB_HOST: db
+      SEMAPHORE_DB_PORT: 3306
+      SEMAPHORE_DB: semaphore
+    links:
+#      - db:mysql
+#      - proxy:nginx
+      - db
+      - proxy
+    expose:
+      - 3000
+#    ports:
+#      - 8081:3000
+
+  proxy:
+    hostname: proxy
+    build: proxy
+    expose:
+      - 443
+      - 80
+    ports:
+      - 8443:443
+      - 8080:80
+
+  db:
+    hostname: db
+    image: mysql
+    volumes:
+      - "./dynamic/db:/var/lib/mysql"
+    restart: always
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_DATABASE: semaphore
+      MYSQL_USER: semaphore
+      MYSQL_PASSWORD: semaphore
+    expose:
+      - 3306
