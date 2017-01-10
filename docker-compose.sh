@@ -3,10 +3,17 @@
 # START: VARIABLES
 DEBUG=true
 
+CERT=true
+cert_folder=proxy/cert
+cert_subject="/C=Country/ST=State/L=City/O=Organization/CN=Common.Name"
+
 db_engine=mysql
 db_name=db
 semaphore_api_name=semaphore_api
 proxy_name=proxy
+
+# options: always | unless-stopped
+restart_setting=always
 
 http_port=80
 https_port=443
@@ -20,6 +27,16 @@ then
   docker rmi -f $(docker images $semaphore_api_name:latest -q)
   docker rmi -f $(docker images $proxy_name:latest -q)
   read -p "Continue? "
+fi
+
+if $CERT
+then
+  mkdir -p proxy/cert/
+  openssl req -x509 -days 3650 -batch -nodes \
+    -newkey rsa:2048 \
+    -subj $cert_subject  \
+    -keyout $cert_folder/semaphore.key \
+    -out $cert_folder/semaphore.crt
 fi
 
 # build infrastructure
@@ -41,6 +58,7 @@ docker run \
   -e "MYSQL_USER=semaphore" \
   -e "MYSQL_PASSWORD=semaphore" \
   -v $(pwd)/dynamic/db:/var/lib/mysql \
+  --restart=$restart_setting \
   -d \
   $db_engine
 EOF
@@ -65,6 +83,7 @@ docker run \
   -e "SEMAPHORE_DB=semaphore" \
   -v $(pwd)/dynamic/semaphore:/etc/semaphore \
   --add-host="$db_name:$db_api_ip" \
+  --restart=$restart_setting \
   -d \
   $semaphore_api_name
 EOF
@@ -81,6 +100,7 @@ docker run \
   -p $http_port:80 \
   --add-host="$db_name:$db_api_ip" \
   --add-host="semaphore_api:$semaphore_api_ip" \
+  --restart=$restart_setting \
   -d \
   $proxy_name
 EOF
