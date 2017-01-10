@@ -6,12 +6,21 @@
 ## Prerequisites
 
 * Install [Docker Engine](https://docs.docker.com/engine/installation/)
-* Create SSL certificates by running the command:
+* Choose an option:
 
-```
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+*Option 1:* Create SSL certificates by running the next command:
+
+```shell
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -keyout proxy/cert/semaphore.key \
     -out proxy/cert/semaphore.crt
+```
+
+*Option 2:* Enable variable [CERT](docker-compose.sh) and change [cert_subject](docker-compose.sh) as needed.
+
+```shell
+CERT=true
+cert_subject="/C=Country/ST=State/L=City/O=Organization/CN=Common.Name"
 ```
 
 ## Configuration
@@ -19,29 +28,12 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 * Review and change file [`docker-compose.sh`](docker-compose.sh).
 * Review and change file [`nginx.conf`](./proxy/nginx.conf).
 
-## Running
+## Start infrastructure
 
-* **Active**
+* **Run:** `./docker-compose.sh`
+* Deprecated (missing container launch priority): `docker-compose up`
 
-```
-./docker-compose.sh
-```
+## Accessing via browser
 
-* Deprecated (missing container launch priority)
-
-```
-docker-compose up
-```
-
-## Accessing
-
-* SSL disabled: http://localhost
-* SSL enabled: https://localhost
-
-* Only when semaphore_api ports are enabled: http://localhost:8081
-
-```
-semaphore_api:
-  ports:
-    - 8081:3000
-```
+* SSL disabled: `http://<domain_name>`
+* SSL enabled: `https://<domain_name>`
